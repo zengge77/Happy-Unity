@@ -1,0 +1,19 @@
+ManifestFileVersion: 0
+CRC: 3890217976
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 10fd9ae671b0e1e86afc592fb08c4668
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+Assets:
+- Assets/CSV/4.csv
+- Assets/CSV/2.csv
+- Assets/CSV/1.csv
+- Assets/CSV/3.csv
+Dependencies: []
