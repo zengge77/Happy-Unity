@@ -5,13 +5,13 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.IO;
 using UnityEngine.Networking;
-//using System.Net;
 
 public class StartScene : MonoBehaviour
 {
     public GameObject mainPlane;
     public Button selectButton;
     public Button updateButton;
+    public Button revertButton;
     public Text log;
 
     public GameObject selectPlane;
@@ -24,6 +24,7 @@ public class StartScene : MonoBehaviour
         selectButton.onClick.AddListener(LoadSelectPlane);
         backButton.onClick.AddListener(BackSelectPlane);
         updateButton.onClick.AddListener(UpdateAssetBundle);
+        revertButton.onClick.AddListener(RevertAssetBundle);
     }
 
     private void OnDisable()
@@ -31,6 +32,7 @@ public class StartScene : MonoBehaviour
         selectButton.onClick.RemoveListener(LoadSelectPlane);
         backButton.onClick.RemoveListener(BackSelectPlane);
         updateButton.onClick.RemoveListener(UpdateAssetBundle);
+        revertButton.onClick.RemoveListener(RevertAssetBundle);
     }
 
     void LoadSelectPlane()
@@ -48,13 +50,25 @@ public class StartScene : MonoBehaviour
 
     void UpdateAssetBundle()
     {
+        StopCoroutine(UpdateAssetBundleFromNetWork());
         StartCoroutine(UpdateAssetBundleFromNetWork());
     }
 
-    void UpdateLog(string value)
+    void RevertAssetBundle()
     {
+        UpdateLog("开始回退");
+        StartCoroutine(CreatAssetBundleFromFile());
+    }
+
+    void UpdateLog(System.Object value)
+    {
+        int lineNum = log.text.Split('\n').Length;
+        if (lineNum >= 20)
+        {
+            log.text = string.Empty;
+        }
         log.text += "\n";
-        log.text += value;
+        log.text += value.ToString();
     }
 
     /// <summary>
@@ -78,6 +92,11 @@ public class StartScene : MonoBehaviour
     {
         UnityWebRequest request = UnityWebRequest.Get(path);
         yield return request.SendWebRequest();
+        if (request.isHttpError || request.isNetworkError)
+        {
+            UpdateLog(request.error);
+            yield break;
+        }
         byte[] dates = request.downloadHandler.data;
         File.WriteAllBytes(Date.AssetBundlesPath + "/csv", dates);
 
@@ -110,7 +129,7 @@ public class StartScene : MonoBehaviour
         if (!File.Exists(Date.AssetBundlesPath + "/csv"))
         {
             UpdateLog(Date.AssetBundlesPath + "  持久化文件夹下未找到ab包文件");
-            yield return StartCoroutine(CreatAssetBundleFromFile());
+            yield return CreatAssetBundleFromFile();
         }
 
         LoadAssetBundle();
@@ -123,16 +142,23 @@ public class StartScene : MonoBehaviour
     /// <returns></returns>
     IEnumerator CreatAssetBundleFromFile()
     {
-        UpdateLog("开始从本地更新ab包");
+        UpdateLog("开始从本地复制ab包");
 
         //写入ab包
-        yield return StartCoroutine(WriteAssetBundle(Application.streamingAssetsPath + "/csv"));
+        yield return WriteAssetBundle(Application.streamingAssetsPath + "/csv");
 
         //写入版本文件
-        StreamReader read = new StreamReader(Application.streamingAssetsPath + "/Version.txt");
-        string version = read.ReadLine();
-        read.Close();
-        yield return StartCoroutine(WriteVersionTXT(version));
+
+        UnityWebRequest fileRequest = UnityWebRequest.Get(Application.streamingAssetsPath + "/Version.txt");
+        yield return fileRequest.SendWebRequest();
+        string version = fileRequest.downloadHandler.text;
+
+        //安卓的Application.streamingAssetsPath文件夹无法使用System.IO下的类读取,
+        //StreamReader read = new StreamReader(Application.streamingAssetsPath + "/Version.txt");
+        //string version = read.ReadLine();
+        //read.Close();
+
+        yield return WriteVersionTXT(version);
     }
 
     /// <summary>
@@ -161,6 +187,7 @@ public class StartScene : MonoBehaviour
     /// </summary>
     IEnumerator UpdateAssetBundleFromNetWork()
     {
+        UpdateLog(string.Empty);
         UpdateLog("开始从网络更新ab包");
 
         //检查网络，连接百度
@@ -170,18 +197,19 @@ public class StartScene : MonoBehaviour
         if (baiduRequest.isHttpError || baiduRequest.isNetworkError)
         {
             UpdateLog(baiduRequest.error);
-            baiduRequest.Dispose();
+            yield break;
         }
         else
         {
             UpdateLog("网络连接至百度正常");
         }
+        baiduRequest.Dispose();
 
-        //获取现在的版本
+        //获取本地版本
         StreamReader read = new StreamReader(Application.persistentDataPath + "/Version.txt");
         string oldVersion = read.ReadLine();
         read.Close();
-        UpdateLog("现在版本为： " + oldVersion);
+        UpdateLog("本地版本为： " + oldVersion);
 
         //获取网络上的版本
         string newVersion = string.Empty;
@@ -191,6 +219,7 @@ public class StartScene : MonoBehaviour
         if (versionRequest.isHttpError || versionRequest.isNetworkError)
         {
             UpdateLog(versionRequest.error);
+            yield break;
         }
         else
         {
@@ -198,6 +227,7 @@ public class StartScene : MonoBehaviour
             newVersion = versionRequest.downloadHandler.text;
             UpdateLog("网络版本为： " + newVersion);
         }
+        versionRequest.Dispose();
 
         //版本对比，更新ab包和版本文件
         if (int.Parse(oldVersion) < int.Parse(newVersion))
@@ -206,10 +236,11 @@ public class StartScene : MonoBehaviour
 
             //更新ab包
             string assetBundleUrl = "https://zengge77.github.io/resources/Happy/csv";
-            yield return StartCoroutine(WriteAssetBundle(assetBundleUrl));
+            UpdateLog("连接到：" + assetBundleUrl);
+            yield return WriteAssetBundle(assetBundleUrl);
 
             //更新版本文件
-            yield return StartCoroutine(WriteVersionTXT(newVersion));
+            yield return WriteVersionTXT(newVersion);
         }
         else
         {

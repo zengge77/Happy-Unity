@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 1530485466
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: csv
+      Dependencies: {}

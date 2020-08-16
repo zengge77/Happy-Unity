@@ -4,34 +4,26 @@ using UnityEngine;
 
 public class Date
 {
-    public static string AssetBundlesPackagingPath = "Assets/AssetBundles";
+    public static string AssetBundlesPackagingPathWithWindows = "Assets/AssetBundles/Windows";
+    public static string AssetBundlesPackagingPathWithAndroid = "Assets/AssetBundles/Android";
+    public static string AssetBundlesPackagingPathWithOriginal = "Assets/AssetBundles/Original";
 
     public static string AssetBundlesPath
     {
         get
         {
-            if (Application.platform == RuntimePlatform.WindowsEditor)
-            {
-                return Application.persistentDataPath;
-            }
-            else if (Application.platform == RuntimePlatform.Android)
-            {
-                //return "jar:file://" + Application.persistentDataPath + "!/assets/AssetBundles/";
-                return Application.persistentDataPath;
-            }
-            else
-            {
-                return null;
-            }
+            return Application.persistentDataPath;
+            //if (Application.platform == RuntimePlatform.WindowsEditor)
+            //{
+            //    return Application.persistentDataPath;
+            //}
+            //else if (Application.platform == RuntimePlatform.Android)
+            //{
+            //    return Application.persistentDataPath;
+            //}
         }
     }
 
-    private static TextAsset csv;
-    public static TextAsset CSV
-    {
-        get { return csv; }
-        set { csv = value; }
-    }
-
     public static AssetBundle CSVAssetBundle { get; set; }
+    public static TextAsset CSV { get; set; }
 }

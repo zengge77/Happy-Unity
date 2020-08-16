@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Text;
+using UnityEngine.UI;
 
 public class GameLogic : MonoBehaviour
 {
@@ -16,6 +17,8 @@ public class GameLogic : MonoBehaviour
     //小功能：对象池
     //大功能: 奖励糖果的引入
     //小功能: 计分榜
+
+    public Text log;
 
     public GameObject cell;
     public Transform cellArea;
@@ -43,6 +46,7 @@ public class GameLogic : MonoBehaviour
     enum GameState { SelectFirstCandy, SelectSecondCandy, DecideCanExchange, StartCalculation, Calculating };
     GameState gameState = GameState.SelectFirstCandy;
 
+
     void Start()
     {
         //读取csv文件，获取代表格子类型的字符串二维数组
@@ -55,7 +59,7 @@ public class GameLogic : MonoBehaviour
         //赋值到 map
         for (int i = 0; i < height; i++)
         {
-            
+
             for (int j = 0; j < width; j++)
             {
                 switch (cellTypeArray[height - 1 - i, j])
@@ -68,7 +72,7 @@ public class GameLogic : MonoBehaviour
                         break;
 
                     default:
-                        map[i, j] = CellType.Empty;
+                        map[i, j] = CellType.NormalCandy;
                         Debug.Log("未找到对应类型");
                         break;
                 }
@@ -80,6 +84,7 @@ public class GameLogic : MonoBehaviour
         CreatrCellArea();
         CreatrCandyArea();
     }
+
     void Update()
     {
         switch (gameState)
@@ -128,6 +133,17 @@ public class GameLogic : MonoBehaviour
             case GameState.Calculating:
                 break;
         }
+    }
+
+    public void UpdateLog(System.Object value)
+    {
+        int lineNum = log.text.Split('\n').Length;
+        if (lineNum >= 15)
+        {
+            log.text = string.Empty;
+        }
+        log.text += "\n";
+        log.text += value.ToString();
     }
 
     void CreatrCellArea()
