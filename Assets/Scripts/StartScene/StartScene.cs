@@ -106,9 +106,9 @@ public class StartScene : MonoBehaviour
     /// <summary>
     /// 将txt版本信息写入到持久化文件夹下
     /// </summary>
-    /// <param name="path"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    IEnumerator WriteVersionTXT(string value)
+    IEnumerator WriteVersionTxt(string value)
     {
         string path = Date.AssetBundlesPath + "/Version.txt";
         StreamWriter write = new StreamWriter(path, false);
@@ -158,7 +158,7 @@ public class StartScene : MonoBehaviour
         //string version = read.ReadLine();
         //read.Close();
 
-        yield return WriteVersionTXT(version);
+        yield return WriteVersionTxt(version);
     }
 
     /// <summary>
@@ -168,7 +168,6 @@ public class StartScene : MonoBehaviour
     {
         TextAsset[] csvs = Date.CSVAssetBundle.LoadAllAssets<TextAsset>();
         int num = csvs.Length;
-        int oldNum = node.transform.childCount;
         for (int i = 0; i < node.transform.childCount; i++)
         {
             Destroy(node.transform.GetChild(i).gameObject);
@@ -190,7 +189,7 @@ public class StartScene : MonoBehaviour
         UpdateLog(string.Empty);
         UpdateLog("开始从网络更新ab包");
 
-        //检查网络，连接百度
+        #region 检查网络，连接百度
         string baiduUrl = "https://www.baidu.com/";
         UnityWebRequest baiduRequest = UnityWebRequest.Get(baiduUrl);
         yield return baiduRequest.SendWebRequest();
@@ -204,14 +203,16 @@ public class StartScene : MonoBehaviour
             UpdateLog("网络连接至百度正常");
         }
         baiduRequest.Dispose();
+        #endregion
 
-        //获取本地版本
+        #region 获取本地版本
         StreamReader read = new StreamReader(Application.persistentDataPath + "/Version.txt");
         string oldVersion = read.ReadLine();
         read.Close();
         UpdateLog("本地版本为： " + oldVersion);
+        #endregion
 
-        //获取网络上的版本
+        #region 获取网络上的版本
         string newVersion = string.Empty;
         string versionUrl = "https://zengge77.github.io/resources/Happy/Version.txt";
         UnityWebRequest versionRequest = UnityWebRequest.Get(versionUrl);
@@ -228,8 +229,9 @@ public class StartScene : MonoBehaviour
             UpdateLog("网络版本为： " + newVersion);
         }
         versionRequest.Dispose();
+        #endregion
 
-        //版本对比，更新ab包和版本文件
+        #region 版本对比，更新ab包和版本文件
         if (int.Parse(oldVersion) < int.Parse(newVersion))
         {
             UpdateLog("发现新版本");
@@ -240,11 +242,12 @@ public class StartScene : MonoBehaviour
             yield return WriteAssetBundle(assetBundleUrl);
 
             //更新版本文件
-            yield return WriteVersionTXT(newVersion);
+            yield return WriteVersionTxt(newVersion);
         }
         else
         {
             UpdateLog("已经是最新版本");
-        }
+        } 
+        #endregion
     }
 }
